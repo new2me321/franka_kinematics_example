@@ -10,7 +10,6 @@ import rospy
 
 
 def go_to_goal(pose, q_init=None):
-    print("Target pose:", pose)
     pos, quat = PoseConv.to_pos_quat(pose)
     solution = ik.get_ik(q_init, pos[0], pos[1],
                          pos[2], quat[0], quat[1], quat[2], quat[3])
@@ -22,7 +21,7 @@ def go_to_goal(pose, q_init=None):
 # Start up ROS and publish the joint states
 rospy.init_node("go_to_goal")
 joint_pub = rospy.Publisher(
-    '/effort_joint_trajectory_controller/command', JointTrajectory, queue_size=10)
+    '/position_joint_trajectory_controller/command', JointTrajectory, queue_size=10)
 rate = rospy.Rate(10)
 
 # TRAC_IK parameters
@@ -30,7 +29,7 @@ robot_description = rospy.get_param('robot_description')
 base_link = "panda_link0"
 end_link = "panda_link8"
 
-ik = IK('panda_link0', 'panda_link8', urdf_string=robot_description)
+ik = IK(base_link, end_link, urdf_string=robot_description)
 
 print("\n\n--------TRAC_IK EXAMPLE--------\n")
 print(f"Joint names: {ik.joint_names}")
@@ -53,7 +52,8 @@ target_poses = [[[0.0, 2.4, 0.8], [0.0, 0.3, 1.0]],  # Should fail
                 ]
 
 while not rospy.is_shutdown():
-    for target_pose in target_poses:
+    for i, target_pose in enumerate(target_poses):
+        print(f"Target pose {i+1}: {target_pose}")
 
         trajectory_msg.header.stamp = rospy.Time.now()
 
@@ -66,12 +66,8 @@ while not rospy.is_shutdown():
             trajectory_msg.points[0].time_from_start = rospy.Duration(3)
             joint_pub.publish(trajectory_msg)
             rospy.sleep(4)
-            print("REACHED!\n")
 
             # update the initial guess positions with current joint positions
             q_init = q_out
-
-        else:
-            print("NOT reachable\n")
 
         rate.sleep()
