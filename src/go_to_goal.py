@@ -8,6 +8,7 @@ import rospy
 
 
 def go_to_goal(pose, q_init=None):
+    global kdlKinematics
     solution = kdlKinematics.inverse(pose=pose,  q_guess=q_init)
     if solution is None:
         solution = kdlKinematics.inverse_search(pose=pose, timeout=4)
@@ -33,8 +34,8 @@ kdlKinematics = KDLKinematics(robot_urdf, base_link, end_link)
 print("\n\n--------KDL KINEMATICS EXAMPLE--------\n")
 print(f"Joint names: {kdlKinematics.get_joint_names()}")
 num_joints = kdlKinematics.num_joints
-print(f"Number of joints: {num_joints} \n")
-
+print(f"Number of joints: {num_joints}")
+print(f"Link names: {kdlKinematics.get_link_names()}\n")
 
 # we set the initial (guess) position of the robot.
 q_init = [0.0]*num_joints

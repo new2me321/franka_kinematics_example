@@ -10,6 +10,7 @@ import rospy
 
 
 def go_to_goal(pose, q_init=None):
+    global ik
     pos, quat = PoseConv.to_pos_quat(pose)
     solution = ik.get_ik(q_init, pos[0], pos[1],
                          pos[2], quat[0], quat[1], quat[2], quat[3])
@@ -34,7 +35,8 @@ ik = IK(base_link, end_link, urdf_string=robot_description)
 print("\n\n--------TRAC_IK EXAMPLE--------\n")
 print(f"Joint names: {ik.joint_names}")
 num_joints = ik.number_of_joints
-print(f"Number of joints: {num_joints} \n")
+print(f"Number of joints: {num_joints}")
+print(f"Link names: {ik.link_names} \n")
 
 
 # we set the initial position of the robot
