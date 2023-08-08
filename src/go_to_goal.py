@@ -8,16 +8,16 @@ import rospy
 
 
 def go_to_goal(pose, q_init=None):
-    global kdlKinematics
-    solution = kdlKinematics.inverse(pose=pose,  q_guess=q_init)
+    global kdl_solver
+    solution = kdl_solver.inverse(pose=pose,  q_guess=q_init)
     if solution is None:
-        solution = kdlKinematics.inverse_search(pose=pose, timeout=4)
+        solution = kdl_solver.inverse_search(pose=pose, timeout=4)
 
     print("Solution found: ", True if solution is not None else False)
     return solution
 
 
-# Start up ROS to publish the joint states
+# Start up ROS 
 rospy.init_node("go_to_goal")
 joint_pub = rospy.Publisher(
     '/position_joint_trajectory_controller/command', JointTrajectory, queue_size=10)
@@ -29,13 +29,13 @@ robot_urdf = URDF.from_xml_string(robot_description)
 
 base_link = "panda_link0"
 end_link = "panda_link8"
-kdlKinematics = KDLKinematics(robot_urdf, base_link, end_link)
+kdl_solver = KDLKinematics(robot_urdf, base_link, end_link)
 
 print("\n\n--------KDL KINEMATICS EXAMPLE--------\n")
-print(f"Joint names: {kdlKinematics.get_joint_names()}")
-num_joints = kdlKinematics.num_joints
+print(f"Joint names: {kdl_solver.get_joint_names()}")
+num_joints = kdl_solver.num_joints
 print(f"Number of joints: {num_joints}")
-print(f"Link names: {kdlKinematics.get_link_names()}\n")
+print(f"Link names: {kdl_solver.get_link_names()}\n")
 
 # we set the initial (guess) position of the robot.
 q_init = [0.0]*num_joints
@@ -60,7 +60,7 @@ while not rospy.is_shutdown():
         q_out = go_to_goal(target_pose, q_init)
 
         if q_out is not None:
-            trajectory_msg.joint_names = kdlKinematics.get_joint_names()
+            trajectory_msg.joint_names = kdl_solver.get_joint_names()
             trajectory_msg.points[0].positions = q_out
             trajectory_msg.points[0].time_from_start = rospy.Duration(3)
             joint_pub.publish(trajectory_msg)

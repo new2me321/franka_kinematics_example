@@ -1,8 +1,7 @@
-
 #! /usr/bin/env python3
 
 from urdf_parser_py.urdf import URDF
-from pykdl_utils.kdl_kinematics import *
+from pykdl_utils.kdl_kinematics import PoseConv
 from trac_ik_python.trac_ik import IK
 
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
@@ -10,16 +9,16 @@ import rospy
 
 
 def go_to_goal(pose, q_init=None):
-    global ik
+    global ik_solver
     pos, quat = PoseConv.to_pos_quat(pose)
-    solution = ik.get_ik(q_init, pos[0], pos[1],
+    solution = ik_solver.get_ik(q_init, pos[0], pos[1],
                          pos[2], quat[0], quat[1], quat[2], quat[3])
 
     print("Solution found: ", True if solution is not None else False)
     return solution
 
 
-# Start up ROS and publish the joint states
+# Start up ROS 
 rospy.init_node("go_to_goal")
 joint_pub = rospy.Publisher(
     '/position_joint_trajectory_controller/command', JointTrajectory, queue_size=10)
@@ -30,13 +29,13 @@ robot_description = rospy.get_param('robot_description')
 base_link = "panda_link0"
 end_link = "panda_link8"
 
-ik = IK(base_link, end_link, urdf_string=robot_description)
+ik_solver = IK(base_link, end_link, urdf_string=robot_description)
 
 print("\n\n--------TRAC_IK EXAMPLE--------\n")
-print(f"Joint names: {ik.joint_names}")
-num_joints = ik.number_of_joints
+print(f"Joint names: {ik_solver.joint_names}")
+num_joints = ik_solver.number_of_joints
 print(f"Number of joints: {num_joints}")
-print(f"Link names: {ik.link_names} \n")
+print(f"Link names: {ik_solver.link_names} \n")
 
 
 # we set the initial position of the robot
@@ -63,7 +62,7 @@ while not rospy.is_shutdown():
         q_out = go_to_goal(target_pose, q_init)
 
         if q_out is not None:
-            trajectory_msg.joint_names = list(ik.joint_names)
+            trajectory_msg.joint_names = list(ik_solver.joint_names)
             trajectory_msg.points[0].positions = q_out
             trajectory_msg.points[0].time_from_start = rospy.Duration(3)
             joint_pub.publish(trajectory_msg)
