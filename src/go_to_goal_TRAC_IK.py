@@ -4,6 +4,7 @@
 from urdf_parser_py.urdf import URDF
 from pykdl_utils.kdl_kinematics import *
 from trac_ik_python.trac_ik import IK
+
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 import rospy
 
@@ -18,28 +19,28 @@ def go_to_goal(pose, q_init=None):
     return solution
 
 
-robot_description = rospy.get_param('robot_description')
-robot_urdf = URDF.from_xml_string(robot_description)
-base_link = "panda_link0"
-end_link = "panda_link8"
-
-robot_description = rospy.get_param('robot_description')
-ik = IK('panda_link0', 'panda_link8', urdf_string=robot_description)
-
-print(ik.joint_names)
-num_joints = ik.number_of_joints
-print(num_joints)
-
-# Now we can compute our needed joint angles to position our robot to reach the desired position.
-# Before that, we set the initial position of the robot
-q_init = [0.0]*7
-q_init[3] = -1.57
-
 # Start up ROS and publish the joint states
 rospy.init_node("go_to_goal")
 joint_pub = rospy.Publisher(
     '/effort_joint_trajectory_controller/command', JointTrajectory, queue_size=10)
 rate = rospy.Rate(10)
+
+# TRAC_IK parameters
+robot_description = rospy.get_param('robot_description')
+base_link = "panda_link0"
+end_link = "panda_link8"
+
+ik = IK('panda_link0', 'panda_link8', urdf_string=robot_description)
+
+print("\n\n--------TRAC_IK EXAMPLE--------\n")
+print(f"Joint names: {ik.joint_names}")
+num_joints = ik.number_of_joints
+print(f"Number of joints: {num_joints} \n")
+
+
+# we set the initial position of the robot
+q_init = [0.0]*num_joints
+q_init[3] = -1.57
 
 trajectory_msg = JointTrajectory()
 trajectory_msg.points.append(JointTrajectoryPoint())
